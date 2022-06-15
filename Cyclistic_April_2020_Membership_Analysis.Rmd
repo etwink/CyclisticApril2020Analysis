@@ -1,0 +1,186 @@
+---
+title: "Cyclistic April 2020 Membership Analysis"
+author: "Elliott Wink"
+date: '2022-06-15'
+output:
+  html_document: 
+    toc: true
+  pdf_document: 
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\newpage
+
+# Introduction
+Cyclistic is a bike-sharing program in the city of Chicago with a fleet of 5,824 bicycles and 692 stations spread across the city. The purpose of this report is to answer the question: "How do annual members and casual riders use Cyclistic bikes differently?" This question will be answered in the "*Analysis*" section. Recommendations of marketing strategies aimed at converting casual riders into annual members will be given in the "*Recommendations*" section. Details of how the data was altered will be covered in the "*Data Preparation and Processing*" section.
+
+# Data Preperation and Processing
+## About the Data
+The data set provided ("**202004-divvy-tripdata.csv**") consists of data collected by Cyclistic and the data set originally included 84,776 observations and 13 variables. These variables are: ride_id, rideable_type, started_at, ended_at, start_station_name, start_station_id, end_station_name, end_station_id, start_lat, start_lng, end_lat, end_lng, and member_casual.
+
+The __*ride_id*__ is a unique identifier for each ride taken during the month. The __*rideable_type*__ is an identifier for the type of rideable used. This data set only included docked bikes but other bikes such as reclining bikes, hand tricycles, and cargo bikes are also available for riders to use. The __*started_at*__ and __*ended_at*__ variables include the date and time that each ride started and ended at (in MM/DD/YYYY HH:MM format). The __*start_station_name*__ and __*end_station_name*__ are the street locations where each ride started and ended at. The *start_station_id* and *end_station_id* are unique identifiers for each docking station. The __*start_lat*__, __*start_lng*__, __*end_lat*__, and __*end_lng*__ are the longitude and latitude for the starting and ending docking stations. Finally, the __*member_casual*__ is description as to the type of rider that took that ride.
+
+## Data Preparation
+For this project, the data analysis tools used were the R programming language and Tableau[^1]. The R programming language was used for its ability to perform statistical analysis and ability to transform data efficiently. Tableau was used to help further visualize the data where two dashboards were created to display some graphs. 
+
+In the data set, there were 99 rides that included missing values. These values did have end times so these missing values may have been due to a software issue with the docking station or a data entry issue. Also there were also 14 rides where the end time was before the start time. Similar to the missing value issue, this may have been a software issue or a data entry issue. There were 40 rides where the start location and end location were different but there was a ride time of zero. This is most likely due to a software or data entry issue. There were 628 rides that had a ride time of zero. This could have been a software issue, data entry issue, or riders may have returned the bike as soon as the rented it.
+
+## Data Processing
+As stated in the "Data Preparation" subsection, there were 99 rides that included missing values. This is about 0.12% of the original data set, these observations were removed as it will most likely not affect the analysis. There was a total of 642 rides that had ride times of zero or less and these observations were also removed. This accounted for 0.76% of the remaining data. The rides that had different start and end locations could have been interpolated so that they closely matched other rides with the same start and end locations but this would not account for rides that take multiple stops before being returned so it was safer to remove them entirely. These changes were saved to another file ("**202004-divvy-tripdata-cleaned.csv**") so that the original data set would not be altered in-case there were mistakes in the data cleaning process. This cleaned data set was the data set used for analysis.
+
+Throughout the analysis section, some of the data is normalized in order to better understand the difference between annual members and casual riders. The normalization function that is used is a min-max normalization[^2] which rescales the range of values between [0, 1]. This does not change the original data set but is a technique that is used frequently during this analysis.
+
+\newpage
+
+# Analysis
+```{r include=FALSE}
+source("helper_functions/my_install_packages.R")
+source("helper_functions/cyclistic_data_cleaning.R")
+
+myInstallPackages()
+d <- cleanData()
+```
+
+## Ride Length
+The graphs below display the distribution of the length of rides between the annual members and the casual riders. These graphs include ride times under 2 hours as 98.6% of all rides are under 2 hours. The maximum ride length is 978.66 hours and the average ride time over 2 hours is 18.2 hours. The average ride time for annual members is 17 minutes and the average ride time for casual riders is 31 minutes.
+
+The graph labeled "Number of Rides vs. Ride Length" displays the true number of rides lengths at each minute while the graph labeled "Normalized Number of Rides vs. Ride Length" displays the same data but normalized to more easily visualize the difference between annual members and casual riders.
+
+```{r include=FALSE}
+source("helper_functions/cyclistic_ride_length.R")
+my_data_sets <- getRideLength(d)
+d1 <- data.frame(my_data_sets[1])
+```
+
+```{r echo=FALSE, fig.dim=c(8,3)}
+ggplot(data=d1, aes(x=ride_time, y=number_of_rides_at_minute_n, color=member_casual))+
+  geom_line(size = 1.25) + 
+  labs(title = "Number of Rides vs. Ride Length", x="Ride Length (minutes)", y="Number of Rides")
+```
+
+```{r include=FALSE}
+d2 <- data.frame(my_data_sets[2])
+```
+
+```{r echo=FALSE, fig.dim=c(8,3)}
+ggplot(data=d2, aes(x=ride_time, y=norm_scale, color=member_casual))+
+  geom_line(size = 1.25) + 
+  labs(title = "Normalized Number of Rides vs. Ride Length", x="Ride Length (minutes)", y="Number of Rides")
+```
+
+As displayed by these graphs, casual riders tend to ride for a longer duration than annual members. As stated previously, the average ride time for annual members is 17 minutes and the average ride time for casual riders is 31 minutes. This difference may be explained by annual members using bikes to go to work or to travel short distances. Since these riders are not charged per ride, like a sing-ride pass, they have the ability to dock and undock bikes as they please. Full-day pass riders may choose to keep bikes undocked for longer as riders, such as tourists, may use the bikes as a cheap alternative to renting a motor vehicle to explore the city.
+
+## Favorite Start Locations
+The charts below show the favorite start locations of casual riders and annual members. These charts include the top 10 starting locations for casual riders and annual members with 4 stations being in the top 10 starting locations for both. 
+
+The chart labeled "Favorite Start Location of Members and Casual Riders" includes the actual values of the amount of rides starting from these locations. The chart labeled "Normalized Favorite Start Locations" displays the same values but normalized to more easily visualize the difference between annual members and casual riders.
+
+```{r include=FALSE}
+source("helper_functions/cyclistic_start_location_popularity.R")
+my_data_sets <- my_data_sets <- startLocationPopularity(d)
+d4 <- data.frame(my_data_sets[1])
+```
+
+```{r echo=FALSE, fig.dim=c(8,4)}
+ggplot(data=d4, aes(x=start_station_name, y=start_station_count, fill=member_casual))+
+  geom_col(position = "dodge", color = "black", width = .75) + 
+  coord_flip() + 
+  labs(title = "Favorite Start Location of Members and Casual Riders", x="Start Station Name", y="Start Station Count")
+```
+
+```{r include=FALSE}
+d5 <- data.frame(my_data_sets[2])
+```
+
+```{r echo=FALSE, fig.dim=c(8,4)}
+ggplot(data=d5, aes(x=start_station_name, y=normalized_start_station_count, fill=member_casual))+
+  geom_col(position = "dodge", color = "black", width = .75) + 
+  coord_flip() +
+  labs(title = "Normalized Favorite Start Locations", x="Start Station Name", y="Start Station Count")
+```
+
+As displayed by these charts, the favorite starting location for annual members and casual riders is Clark St & Elm St. Interestingly, the St. Clair St & Erie St location is very popular among annual members with 589 rides but is not very popular with casual members with only 93 rides. This could be due to a number of factors, such as, this station may be near a high-density residential area and people use this station to go to and from work, but would greatly benefit from looking at historic data to identify trends for this particular station.
+
+## Favorite End Destinations
+The charts below show the favorite end destinations of casual riders and annual members. These charts include the top 10 ending destinations for casual riders and annual members with 3 stations being in the top 10 ending destinations for both. 
+
+The chart labeled "Favorite Destinations of Members and Casual Riders" includes the actual values of the amount of rides ending at these locations. The chart labeled "Normalized Favorite Destinations" displays the same values but normalized to more easily visualize the difference between annual members and casual riders.
+```{r include=FALSE}
+source("helper_functions/cyclistic_end_destination_popularity.R")
+my_data_sets <- endDestinationPopularity(d)
+d6 <- data.frame(my_data_sets[1])
+```
+
+```{r echo=FALSE, fig.dim=c(8,4)}
+ggplot(data=d6, aes(x=end_station_name, y=end_station_count, fill=member_casual))+
+  geom_col(position = "dodge", color = "black", width = .75) + 
+  coord_flip() + 
+  labs(title = "Favorite Destinations of Members and Casual Riders", x="End Station Name", y="End Station Count")
+```
+
+```{r include = FALSE}
+d7 <- data.frame(my_data_sets[2])
+```
+
+```{r echo=FALSE, fig.dim=c(8,4)}
+ggplot(data=d7, aes(x=end_station_name, y=normalized_end_station_count, fill=member_casual))+
+  geom_col(position = "dodge", color = "black", width = .75) + 
+  coord_flip() +
+  labs(title = "Normalized Favorite Destinations", x="End Station Name", y="End Station Count")
+```
+
+As displayed by these charts, the favorite ending destinations for annual members and casual riders is Clark St & Elm St. The St. Clair St & Erie St location is very popular among annual members with 614 rides but is not very popular with casual members with only 79 rides. As stated in the previous subsection, this could be due to many factors and should be explored more thoroughly in the future. Also, the amount of casual members using these 17 locations is relatively the same besides the St. Clair St & Erie St location having about half of the typical amount of riders.
+
+### Start Time Analysis
+The graphs below display the distribution ride start times between the annual members and the casual riders. The peak times for annual members are at 15:55 (3:55PM) and 17:01 (5:01PM) with 128 rides starting at these times. The peak time for casual riders is at 14:43 (2:43PM) with 64 rides starting at this time.
+
+The graph labeled "Start Time Distribution" displays the actual number of rides at a certain time while the graph labeled "Normalized Start Time Distribution" displays the same data but normalized to more easily visualize the difference between annual members and casual riders.
+
+```{r include = FALSE}
+source("helper_functions/cyclistic_start_time_distribution.R")
+my_data_sets <- rideStartTimes(d)
+
+d8 <- data.frame(my_data_sets[1])
+```
+
+```{r echo=FALSE, fig.dim=c(8,3)}
+ggplot(data = d8, aes(x=time_started_at, y=time_started_at_count, color=member_casual)) + 
+  geom_line() +
+  scale_x_time(breaks = breaks_width("5 hours"), minor_breaks = breaks_width("1 hour")) +
+  labs(title = "Start Time Distribution", x="Time Started At (HH:MM:SS)", y="Count of Time Started At")
+```
+
+```{r include = FALSE}
+d9 <- data.frame(my_data_sets[2])
+```
+
+```{r echo=FALSE, fig.dim=c(8,3)}
+ggplot(data = d9, aes(x=time_started_at, y=normalized_time_started_at_count, color=member_casual)) + 
+  geom_line() + 
+  scale_x_time(breaks = breaks_width("5 hours"), minor_breaks = breaks_width("1 hour")) +
+  labs(title = "Normalized Start Time Distribution", x="Time Started At (HH:MM:SS)", y="Normalized Count of Time Started At")
+```
+
+As displayed by these graphs, peak ridership for both groups is between around 13:00 (1:00PM) and 18:00 (6:00PM). This peak time window should be studied more and it may be beneficial to ask riders of both groups to participate in a survey as to where they are going to better understand why this peak is during such a wide window. A spike in ridership of members happens around 6:00 (6:00AM) and 7:00 (7:00AM) and is most likely due to riders using bikes to travel to work but the number of riders stays consistent until around 10:00 (10:00AM) when the amount of riders increases. As stated previously, this spike in riders in the middle of the day could be better understood with more research and data.
+
+\newpage
+
+# Recommendations
+## Electric Bikes
+As shown in the "Ride Length" subsection, casual riders, on average, use a bike for 14 minutes longer than annual members. One strategy to convert casual riders to annual members would be to offer different bikes such as electric bikes or battery assisted bikes to annual members. These bikes would be appealing to riders that have longer ride times as these bikes reduce the physical strain of long rides. Certain bike docks could be converted to allow the charging of these electric bikes so that riders will always have a fully charged electric bike when they want to use one.
+
+## Member Only Docking Stations
+Another strategy would be to add more docking stations near popular locations but make them only accessible to annual members. A few possible locations would be near the Wabash Ave & Grand Ave station, Stockton Dr & Wrightwood Ave station, Desplaines St & Kinzie St station, Dearborn St & Erie St station, and Broadway & Barry Ave station. Multiple locations along Wells St as well as Clark St are also popular and may benefit from adding annual member only stations as well. These popular stations can be seen in the "Favorite Start Locations" and "Favorite End Destinations" sections.
+
+## Surge Pricing
+The final strategy proposal, which will most likely be unpopular among casual riders, is to impose "Surge Pricing" on casual riders, which is what many ride-share companies, like Uber and Lyft, employ to hike prices in situations of high demand of low supply. In the "Start Time Analysis" section, it is shown that the peak ridership for both annual members and casual riders is between 13:00 (1:00PM) and 18:00 (6:00PM). During those times, single-ride passes could be sold at an elevated price. This may persuade casual riders to become annual members if they find themselves using single-ride passes very often during this time window.
+
+# Final Thoughts
+For the month of April 2020, casual rides only made up about 28% of the total rides and annual members made up about 72% of the total rides. Without pricing data for these casual rides it is difficult to grasp how much of an impact it would make for Cyclistic if more of these casual riders became annual members. More historical data, such as a year-to-date data set, would help identify if April 2020 displayed typical year-round ridership or if this month differed significantly from other months. More historical data would also improve the ability to discern patterns between casual riders and annual members.
+
+[^1]: https://public.tableau.com/app/profile/elliott.wink/viz/CyclisticApril2020/RidershipStatisticsDashboard
+[^2]: https://en.wikipedia.org/wiki/Feature_scaling#Rescaling_(min-max_normalization)
