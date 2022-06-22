@@ -143,7 +143,6 @@ The graph labeled "Start Time Distribution" displays the actual number of rides 
 ```{r include = FALSE}
 source("helper_functions/cyclistic_start_time_distribution.R")
 my_data_sets <- rideStartTimes(d)
-
 d8 <- data.frame(my_data_sets[1])
 ```
 

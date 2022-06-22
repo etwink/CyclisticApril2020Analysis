@@ -25,7 +25,7 @@ d2 <- data.frame(my_data_sets[2])
 jpeg("graphs/normalized_ride_length_line_graph.jpeg")
 ggplot(data=d2, aes(x=ride_time, y=norm_scale, color=member_casual))+
   geom_line(size = 1.25) + 
-  labs(title = "Normalized Number of Rides vs. Ride Length", x="Ride Length (minutes)", y="Number of Rides")
+  labs(title = "Normalized Number of Rides vs. Ride Length", x="Ride Length (minutes)", y="Normalized Number of Rides")
 dev.off()
 
 #!!! Rideable Analysis !!!#
@@ -44,7 +44,7 @@ my_data_sets <- startLocationPopularity(d)
 d4 <- data.frame(my_data_sets[1])
 jpeg("graphs/start_location_bar_chart.jpeg")
 ggplot(data=d4, aes(x=start_station_name, y=start_station_count, fill=member_casual))+
-  geom_col(position = "dodge", color="black") + 
+  geom_col(position = "dodge", color = "black", width = .75) + 
   coord_flip() + 
   labs(title = "Favorite Start Location of Members and Casual Riders", x="Start Station Name", y="Start Station Count")
 dev.off()
@@ -53,9 +53,9 @@ dev.off()
 d5 <- data.frame(my_data_sets[2])
 jpeg("graphs/normalized_start_location_bar_chart.jpeg")
 ggplot(data=d5, aes(x=start_station_name, y=normalized_start_station_count, fill=member_casual))+
-  geom_col(position = "dodge", color="black") + 
+  geom_col(position = "dodge", color = "black", width = .75) + 
   coord_flip() +
-  labs(title = "Normalized Favorite Start Locations of Members and Casual Riders", x="Start Station Name", y="Start Station Count")
+  labs(title = "Normalized Favorite Start Locations", x="Start Station Name", y="Normalized Start Station Count")
 dev.off()
 
 #!!! End Location Popularity Analysis !!!#
@@ -65,7 +65,7 @@ my_data_sets <- endDestinationPopularity(d)
 d6 <- data.frame(my_data_sets[1])
 jpeg("graphs/end_destination_bar_chart.jpeg")
 ggplot(data=d6, aes(x=end_station_name, y=end_station_count, fill=member_casual))+
-  geom_col(position = "dodge", color="black") + 
+  geom_col(position = "dodge", color = "black", width = .75) + 
   coord_flip() + 
   labs(title = "Favorite Destinations of Members and Casual Riders", x="End Station Name", y="End Station Count")
 dev.off()
@@ -74,9 +74,9 @@ dev.off()
 d7 <- data.frame(my_data_sets[2])
 jpeg("graphs/normalized_end_destination_bar_chart.jpeg")
 ggplot(data=d7, aes(x=end_station_name, y=normalized_end_station_count, fill=member_casual))+
-  geom_col(position = "dodge", color="black") + 
+  geom_col(position = "dodge", color = "black", width = .75) + 
   coord_flip() +
-  labs(title = "Normalized Favorite Destinations of Members and Casual Riders", x="End Station Name", y="End Station Count")
+  labs(title = "Normalized Favorite Destinations", x="End Station Name", y="Normalized End Station Count")
 dev.off()
 
 #!!! Start Time Analysis !!!#
